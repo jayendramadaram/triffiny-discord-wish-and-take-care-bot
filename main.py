@@ -15,6 +15,7 @@ import json
 
 
 
+
 my_secret = os.environ['TOKEN']
 
 
@@ -25,18 +26,20 @@ flag = 0
 async def on_ready():
     print('We have logged in as {0.user}'.format(client))
     activity = discord.Game(name="with jay")
-    await client.change_presence(status=discord.Status.offline, activity=activity)
+    await client.change_presence(status=discord.Status.idle, activity=activity)
     msg1.start()
 
 
 @tasks.loop(hours=24)
 async def msg1():
+    db["day-plan"] = ""
     message_channel = client.get_channel(884854235441791086)
     num = db["day"]
     myid = '<@763029387674124288>'
     await message_channel.send("%s honey you have only `{}` days to achevie your dreams here are your tasks".format(num) % myid)
     con = sqlite3.connect('mydatabase.db')
     rows = sql_fetch(con)
+    
     for i in rows:
         await message_channel.send(i)
     con.close()
@@ -142,7 +145,10 @@ async def on_message(message):
       input ==sentence with **change && dp** --> changes profile pic\n
       note: content --> adds to notice list\n
       strategy: content  --> adds stretegy\n
-      complete! content  --> deletes from JSON
+      complete! content  --> deletes from JSON\n
+      day-plan: content --> update day plan(re-news every day)
+
+      show + note/schedule/day-plan/strategy --> show respective
       ```
       """)
 
@@ -199,6 +205,9 @@ async def on_message(message):
     elif message.content.startswith("completed!"):
       task = message.content.split("!")[1]
       task_com(task)
+    elif message.content.startswith("day-plan:"):
+      entities =  str(message.content.split(":")[1])
+      db["day-plan"] = entities
     elif "show" in  message.content:
       if "schedule" in message.content:
         with open(r'tasks.json' , "r") as js:
@@ -206,9 +215,7 @@ async def on_message(message):
           for i in data:
             await message.channel.send("```you have task:`{0}` on {1}```".format(i["task"],i["dueDate"]))
       elif "strat" in message.content:
-        con = sqlite3.connect('mydatabase.db')
         await  message.channel.send(db["strat"])
-        con.close()
       elif "notes" in message.content :
         con = sqlite3.connect('mydatabase.db')
         for i in sql_nots(con):
@@ -222,10 +229,17 @@ async def on_message(message):
             await message.channel.send(i)
         await message.reply("yo reached bottom honey")
         con.close()
+      elif "plan" in message.content:
+        await  message.channel.send(db["day-plan"])
       
       
-    
+@client.event
+async def on_member_join(member):
+    role = discord.utils.get(member.server.roles, id="885976148759175178")
+    await client.add_roles(member, role)
 
 
 keep_alive()
 client.run(my_secret)
+
+# from replit import db
