@@ -205,9 +205,11 @@ async def on_message(message):
     elif message.content.startswith("completed!"):
       task = message.content.split("!")[1]
       task_com(task)
-    elif message.content.startswith("day-plan:"):
+    elif message.content.startswith("dayplan:"):
       entities =  str(message.content.split(":")[1])
       db["day-plan"] = entities
+    elif message.content.strip() == "ily":
+      await message.reply("i love you too ♥😍")
     elif "show" in  message.content:
       if "schedule" in message.content:
         with open(r'tasks.json' , "r") as js:
@@ -231,6 +233,7 @@ async def on_message(message):
         con.close()
       elif "plan" in message.content:
         await  message.channel.send(db["day-plan"])
+      
       
       
 @client.event
