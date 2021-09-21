@@ -27,6 +27,7 @@ async def on_ready():
     print('We have logged in as {0.user}'.format(client))
     activity = discord.Game(name="with jay")
     await client.change_presence(status=discord.Status.idle, activity=activity)
+
     msg1.start()
 
 
@@ -40,8 +41,10 @@ async def msg1():
     con = sqlite3.connect('mydatabase.db')
     rows = sql_fetch(con)
     
+    stt = ''
     for i in rows:
-        await message_channel.send(i)
+        stt += str('-'.join(i)) +  '\n'
+    await message_channel.send('```' + stt + '```')
     con.close()
 
     await message_channel.send("-----------------------------------------------------------------------")
@@ -149,6 +152,11 @@ async def on_message(message):
       day-plan: content --> update day plan(re-news every day)
 
       show + note/schedule/day-plan/strategy --> show respective
+
+      help -- > this log
+      ily --> cute reply lmao
+
+      delete>{int} --> delete msg log
       ```
       """)
 
@@ -175,7 +183,7 @@ async def on_message(message):
             for i in rows:
                 await message.channel.send(i)
             await message.reply("yep added it to db check it out")
-            con.close()
+            
         elif len(msg)== 3:
             entity = msg[1]
             sql_del(con, entity)
@@ -183,7 +191,7 @@ async def on_message(message):
             for i in rows:
                 await message.channel.send(i)
             await message.reply("oh yeah deleted fro db check it out")
-            con.close()
+        con.close()
     elif "change" in message.content and "dp" in message.content:
       rand = random.randint(1,7)
       if rand == int(db["rand"]):
@@ -209,7 +217,18 @@ async def on_message(message):
       entities =  str(message.content.split(":")[1])
       db["day-plan"] = entities
     elif message.content.strip() == "ily":
-      await message.reply("i love you too ♥😍")
+      await message.reply("i love you too...")
+
+    elif message.content.startswith("delete>"):
+      num =  message.content.split(">")[1]
+      try:
+        num = int(num) + 1
+        msg = await message.channel.history(limit=num).flatten()
+        for i in msg:
+          await i.delete()
+        await message.channel.send("done deleting {} messages".format(num) , delete_after=5)
+      except:
+        await message.reply("improper format refer/type --> `help`")
     elif "show" in  message.content:
       if "schedule" in message.content:
         with open(r'tasks.json' , "r") as js:
@@ -227,8 +246,10 @@ async def on_message(message):
       elif  "tasks" in message.content.split():
         con = sqlite3.connect('mydatabase.db')
         rows = sql_fetch(con)
+        stt = ''
         for i in rows:
-            await message.channel.send(i)
+            stt += str('-'.join(i)) +  '\n'
+        await message.channel.send('```' + stt + '```')
         await message.reply("yo reached bottom honey")
         con.close()
       elif "plan" in message.content:
